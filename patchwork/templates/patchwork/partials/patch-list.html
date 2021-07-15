@@ -5,7 +5,7 @@
 {% load static %}
 
 {% block headers %}
-  <script src="{% static "js/patch-list.js" %}"></script>
+  <script type="module" src="{% static "js/patch-list.js" %}"></script>
 {% endblock %}
 
 {% include "patchwork/partials/filters.html" %}
@@ -187,8 +187,40 @@
    <td id="patch-checks:{{patch.id}}" class="text-nowrap">{{ patch|patch_checks }}</td>
    <td id="patch-date:{{patch.id}}" class="text-nowrap">{{ patch.date|date:"Y-m-d" }}</td>
    <td id="patch-submitter:{{patch.id}}">{{ patch.submitter|personify:project }}</td>
-   <td id="patch-delegate:{{patch.id}}">{{ patch.delegate.username }}</td>
-   <td id="patch-state:{{patch.id}}">{{ patch.state }}</td>
+   <td id="patch-delegate:{{patch.id}}">
+    {% if user.is_authenticated %}
+      <select class="change-property-delegate" value="delegate">
+        {% if not patch.delegate.username %}
+          <option value="*" selected>No delegate</option>
+        {% else %}
+          <option value="*">No delegate</option>
+          <option value="{{ patch.delegate.id }}" selected>{{ patch.delegate.username }}</option>
+        {% endif %}
+        {% for maintainer in maintainers %}
+          {% if maintainer.id != patch.delegate.id %}
+            <option value="{{ maintainer.id }}">{{ maintainer.name }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    {% else %}
+      {{ patch.delegate.username }}
+    {% endif %}
+   </td>
+   <td id="patch-state:{{patch.id}}">
+    {% if user.is_authenticated %}
+      <select class="change-property-state" value="state">
+        {% for state in states %}
+          {% if state.name == patch.state.name %}
+            <option value="{{ patch.state.ordering }}" selected>{{ patch.state }}</option>
+          {% else %}
+            <option value="{{ state.ordering  }}">{{ state.name }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    {% else %}
+      {{ patch.state }}
+    {% endif %}
+   </td>
   </tr>
  {% empty %}
   <tr>

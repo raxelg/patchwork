@@ -17,6 +17,7 @@ from patchwork.models import Bundle
 from patchwork.models import BundlePatch
 from patchwork.models import Patch
 from patchwork.models import Project
+from patchwork.models import State
 from patchwork.models import Check
 from patchwork.paginator import Paginator
 
@@ -178,6 +179,8 @@ def generic_list(request, project, view, view_args=None, filter_settings=None,
         'project': project,
         'projects': Project.objects.all(),
         'filters': filters,
+        'maintainers': project.maintainer_project.all(),
+        'states': State.objects.all(),
     }
 
     # pagination

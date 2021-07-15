@@ -133,6 +133,12 @@ js
 
   Part of Patchwork.
 
+``patch-list.js.``
+  Event helpers and other application logic for patch-list.html. These
+  support patch list manipulation (e.g. inline dropdown changes).
+
+  Part of Patchwork.
+
 ``selectize.min.js``
   Selectize is the hybrid of a ``textbox`` and ``<select>`` box. It's jQuery
   based and it has autocomplete and native-feeling keyboard navigation; useful
