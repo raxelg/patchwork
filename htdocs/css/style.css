@@ -366,8 +366,7 @@ div.patchform {
     align-items: center;
 }
 
-.change-property, .change-property-delegate, .change-property-state,
-.archive-patch, .add-bundle {
+.change-property, select[class^="change-property-"], .archive-patch, .add-bundle {
     padding: 4px;
     margin-right: 8px;
     box-sizing: border-box;

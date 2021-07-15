@@ -55,7 +55,7 @@
         </div>
         <div id="patchform-archive">
           {{ patchform.archived.errors }}
-          {{ patchform.archived }}
+          {{ patchform.archived.label_tag }} {{ patchform.archived }}
         </div>
         <button class="patchform-submit btn btn-primary" name="action" value="{{patchform.action}}">Update</button>
       </div>
@@ -239,7 +239,7 @@
    <td id="patch-date" class="text-nowrap">{{ patch.date|date:"Y-m-d" }}</td>
    <td id="patch-submitter">{{ patch.submitter|personify:project }}</td>
    <td id="patch-delegate">
-      <select class="change-property-delegate">
+      <select class="change-property-delegate" value="delegate">
         {% if not patch.delegate.username %}
           <option value="*" selected>No delegate</option>
         {% else %}
@@ -255,7 +255,7 @@
       </select>
     </td>
    <td id="patch-state">
-    <select class="change-property-state">
+    <select class="change-property-state" value="state">
       {% for state in states %}
         {% if state.name == patch.state.name %}
           <option value="{{ patch.state.ordering }}" selected>{{ patch.state }}</option>
