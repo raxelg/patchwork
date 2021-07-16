@@ -5,12 +5,17 @@
 
 import email.parser
 
+from django.shortcuts import get_object_or_404
 from django.http import Http404
 from rest_framework.generics import ListAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView
+from rest_framework.serializers import HiddenField
 from rest_framework.serializers import SerializerMethodField
 
 from patchwork.api.base import BaseHyperlinkedModelSerializer
+from patchwork.api.base import MultipleFieldLookupMixin
 from patchwork.api.base import PatchworkPermission
+from patchwork.api.base import CurrentPatchDefault
 from patchwork.api.embedded import PersonSerializer
 from patchwork.models import Cover
 from patchwork.models import CoverComment
@@ -55,6 +60,9 @@ class BaseCommentListSerializer(BaseHyperlinkedModelSerializer):
             '1.1': ('web_url', ),
             '1.2': ('list_archive_url',),
         }
+        extra_kwargs = {
+            'url': {'view_name': 'api-patch-comment-detail'},
+        }
 
 
 class CoverCommentListSerializer(BaseCommentListSerializer):
@@ -66,13 +74,45 @@ class CoverCommentListSerializer(BaseCommentListSerializer):
         versioned_fields = BaseCommentListSerializer.Meta.versioned_fields
 
 
-class PatchCommentListSerializer(BaseCommentListSerializer):
+class PatchCommentSerializer(BaseCommentListSerializer):
+
+    patch = HiddenField(default=CurrentPatchDefault())
 
     class Meta:
         model = PatchComment
-        fields = BaseCommentListSerializer.Meta.fields
-        read_only_fields = fields
+        fields = BaseCommentListSerializer.Meta.fields + (
+            'patch', 'addressed')
+        read_only_fields = fields[:-1]  # able to write to addressed field
+        extra_kwargs = {
+            'url': {'view_name': 'api-patch-comment-detail'}
+        }
         versioned_fields = BaseCommentListSerializer.Meta.versioned_fields
+
+
+class PatchCommentMixin(object):
+
+    permission_classes = (PatchworkPermission,)
+    serializer_class = PatchCommentSerializer
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        comment_id = self.kwargs['comment_id']
+        try:
+            obj = queryset.get(id=int(comment_id))
+        except (ValueError, PatchComment.DoesNotExist):
+            obj = get_object_or_404(queryset, linkname=comment_id)
+        self.kwargs['comment_id'] = obj.id
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def get_queryset(self):
+        patch_id = self.kwargs['patch_id']
+        if not Patch.objects.filter(id=patch_id).exists():
+            raise Http404
+
+        return PatchComment.objects.filter(
+            patch=patch_id
+        ).select_related('submitter')
 
 
 class CoverCommentList(ListAPIView):
@@ -94,20 +134,24 @@ class CoverCommentList(ListAPIView):
         ).select_related('submitter')
 
 
-class PatchCommentList(ListAPIView):
-    """List comments"""
+class PatchCommentList(PatchCommentMixin, ListAPIView):
+    """List patch comments"""
 
-    permission_classes = (PatchworkPermission,)
-    serializer_class = PatchCommentListSerializer
     search_fields = ('subject',)
     ordering_fields = ('id', 'subject', 'date', 'submitter')
     ordering = 'id'
-    lookup_url_kwarg = 'pk'
+    lookup_url_kwarg = 'patch_id'
 
-    def get_queryset(self):
-        if not Patch.objects.filter(pk=self.kwargs['pk']).exists():
-            raise Http404
 
-        return PatchComment.objects.filter(
-            patch=self.kwargs['pk']
-        ).select_related('submitter')
+class PatchCommentDetail(PatchCommentMixin, MultipleFieldLookupMixin,
+                         RetrieveUpdateDestroyAPIView):
+    """
+    get:
+    Show a patch comment.
+    patch:
+    Update a patch comment.
+    put:
+    Update a patch comment.
+    """
+    lookup_url_kwargs = ('patch_id', 'comment_id')
+    lookup_fields = ('patch_id', 'id')

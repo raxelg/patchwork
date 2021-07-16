@@ -332,9 +332,14 @@ if settings.ENABLE_REST_API:
 
     api_1_1_patterns = [
         path(
-            'patches/<pk>/comments/',
+            'patches/<patch_id>/comments/',
             api_comment_views.PatchCommentList.as_view(),
             name='api-patch-comment-list',
+        ),
+        path(
+            'patches/<patch_id>/comments/<comment_id>/',
+            api_comment_views.PatchCommentDetail.as_view(),
+            name='api-patch-comment-detail',
         ),
         path(
             'covers/<pk>/comments/',
