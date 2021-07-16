@@ -27,6 +27,10 @@ pre {
     top: 17em;
 }
 
+.hidden {
+    display: none;
+}
+
 /* Bootstrap overrides */
 
 .navbar-inverse .navbar-brand > a {
@@ -302,7 +306,7 @@ table.patchmeta tr th, table.patchmeta tr td {
     font-family: "DejaVu Sans Mono", fixed;
 }
 
-#comment-status-bar {
+div[id^="comment-status-bar-"] {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -312,7 +316,7 @@ table.patchmeta tr th, table.patchmeta tr td {
     margin: 0px 8px;
 }
 
-#comment-action-addressed, #comment-action-unaddressed {
+button[id^=comment-action] {
     background-color: var(--light-color);
     border-radius: 4px;
 }
@@ -325,8 +329,13 @@ table.patchmeta tr th, table.patchmeta tr td {
     border-color: var(--warning-color);
 }
 
-#comment-action-addressed:hover, #comment-action-unaddressed:hover {
+#comment-action-addressed:hover {
     background-color: var(--success-color);
+    color: var(--light-color);
+}
+
+#comment-action-unaddressed:hover {
+    background-color: var(--warning-color);
     color: var(--light-color);
 }
 

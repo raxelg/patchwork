@@ -105,6 +105,17 @@ class PatchCommentMixin(object):
         self.check_object_permissions(self.request, obj)
         return obj
 
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        comment_id = self.kwargs['comment_id']
+        try:
+            obj = queryset.get(id=int(comment_id))
+        except (ValueError, PatchComment.DoesNotExist):
+            obj = get_object_or_404(queryset, linkname=comment_id)
+        self.kwargs['comment_id'] = obj.id
+        self.check_object_permissions(self.request, obj)
+        return obj
+
     def get_queryset(self):
         patch_id = self.kwargs['patch_id']
         if not Patch.objects.filter(id=patch_id).exists():

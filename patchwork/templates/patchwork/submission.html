@@ -7,7 +7,7 @@
 {% load static %}
 
 {% block headers %}
-  <script src="{% static "js/submission.js" %}"></script>
+  <script type="module" src="{% static "js/submission.js" %}"></script>
 {% endblock %}
 
 {% block title %}{{submission.name}}{% endblock %}
@@ -280,28 +280,33 @@
       <a href="{% url 'comment-redirect' comment_id=item.id %}">#{{ forloop.counter }}</a>
     </span>
     {% if item.addressed %}
-      <div id="comment-status-bar">
+      <div id="comment-status-bar-addressed" data-comment-id={{item.id}}>
+    {% else %}
+      <div id="comment-status-bar-addressed" class="hidden" data-comment-id={{item.id}}>
+    {% endif %}
         <div id="comment-status-label" class="text-success mx-3">
           <span id="comment-status-icon" class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
           Addressed
         </div>
-        <button id="comment-action-unaddressed" class="text-warning">
+        <button id="comment-action-unaddressed" value="false" class="text-warning">
           <span id="comment-action-icon" class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>
           Unaddressed
         </button>
       </div>
+    {% if item.addressed %}
+      <div id="comment-status-bar-unaddressed" class="hidden" data-comment-id={{item.id}}>
     {% else %}
-      <div id="comment-status-bar">
+      <div id="comment-status-bar-unaddressed" data-comment-id={{item.id}}>
+    {% endif %}
         <div id="comment-status-label" class="text-warning mx-3">
           <span id="comment-status-icon" class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>
           Unaddressed
         </div>
-        <button id="comment-action-addressed" class="text-success">
+        <button id="comment-action-addressed" value="true" class="text-success">
           <span id="comment-action-icon" class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
           Addressed
         </button>
       </div>
-    {% endif %}
   </div>
   <pre class="content">
   {{ item|commentsyntax }}
@@ -314,7 +319,7 @@
   {% include "patchwork/partials/download-buttons.html" %}
   <h2>Patch</h2>
 </div>
-<div id="patch" class="patch">
+<div id="patch" data-patch-id={{submission.id}} class="patch">
 <pre class="content">
 {{ submission|patchsyntax }}
 </pre>

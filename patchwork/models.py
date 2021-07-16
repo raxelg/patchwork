@@ -719,7 +719,7 @@ class PatchComment(EmailMixin, models.Model):
         self.patch.refresh_tag_counts()
 
     def is_editable(self, user):
-        return False
+        return self.patch.is_editable(user)
 
     class Meta:
         ordering = ['date']
