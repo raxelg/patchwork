@@ -131,6 +131,20 @@ js
   :GitHub: https://github.com/js-cookie/js-cookie/
   :Version: 2.2.1
 
+``patch-list.js.``
+
+  Utility functions for patch list manipulation (inline dropdown changes,
+  etc.)
+
+  Part of Patchwork.
+
+``rest.js.``
+
+  Utility module for REST API requests to be used by other Patchwork js files
+  (fetch requests, handling update & error messages).
+
+  Part of Patchwork.
+
 ``selectize.min.js``
 
   Selectize is the hybrid of a ``textbox`` and ``<select>`` box. It's jQuery
