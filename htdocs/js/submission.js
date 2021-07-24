@@ -44,6 +44,11 @@ $( document ).ready(function() {
         toggleDiv("toggle-patch-series", "patch-series", "expand", "collapse");
     });
 
+    // Click listener to show/hide patch diff
+    document.getElementById("toggle-patch-diff").addEventListener("click", function() {
+        toggleDiv("toggle-patch-diff", "patch");
+    });
+
     // Click listener to show/hide related patches
     let related = document.getElementById("toggle-related");
     if (related) {

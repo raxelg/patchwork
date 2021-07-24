@@ -1,4 +1,7 @@
-<div class="btn-group pull-right">
+<div id="patch-diff-actions" class="btn-group">
+  {% if collapse %}
+    <button id="toggle-patch-diff" type="button" class="btn btn-default btn-hide">hide</button>
+  {% endif %}
   <button type="button" class="btn btn-default btn-copy"
      data-clipboard-text="{{ submission.id }}" title="Copy to Clipboard">
       {{ submission.id }}

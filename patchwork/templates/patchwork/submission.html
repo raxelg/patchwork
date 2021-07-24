@@ -14,10 +14,9 @@
 {% block title %}{{submission.name}}{% endblock %}
 
 {% block body %}
-
-<div>
-  {% include "patchwork/partials/download-buttons.html" %}
+<div class="patch-submission-header">
   <h1>{{ submission.name }}</h1>
+  {% include "patchwork/partials/download-buttons.html" with collapse=False %}
 </div>
 
 <table
@@ -273,6 +272,18 @@
   </pre>
 </div>
 
+{% if submission.diff %}
+<div class="patch-diff-header">
+  <h2>Patch</h2>
+  {% include "patchwork/partials/download-buttons.html" with collapse=True %}
+</div>
+<div id="patch" data-patch-id={{submission.id}} class="patch">
+  <pre class="content">
+    {{ submission|patchsyntax }}
+  </pre>
+</div>
+{% endif %}
+
 {% for item in comments %}
 {% if forloop.first %}
 <h2>Comments</h2>
@@ -323,6 +334,7 @@
   </pre>
 </div>
 {% endfor %}
+<<<<<<< HEAD
 
 {% if submission.diff %}
 <div>
@@ -336,4 +348,6 @@
 </div>
 {% endif %}
 
+=======
+>>>>>>> 3185b469 (patch-detail: move patch diff section up and add collapse button)
 {% endblock %}

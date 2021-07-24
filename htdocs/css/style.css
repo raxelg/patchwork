@@ -316,6 +316,20 @@ table.patch-meta tr th, table.patch-meta tr td {
     border: 0;
 }
 
+.patch-diff-header, .patch-submission-header {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+#patch-diff-actions {
+    margin-left: 16px;
+}
+
+.patch .content {
+    padding: 1em;
+}
+
 .patch-pull-url {
     font-family: "DejaVu Sans Mono", fixed;
 }
