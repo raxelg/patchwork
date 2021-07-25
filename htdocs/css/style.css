@@ -1,8 +1,14 @@
 :root {
     --light-color:rgb(247, 247, 247);
-    --success-color:rgb(92, 184, 92);
+    --dark-color:rgb(41, 43, 44);
+    --dark-color-75:rgb(41, 43, 44, .75);
+    --dark-color-50:rgb(41, 43, 44, .5);
+    --dark-color-25:rgb(41, 43, 44, .25);
     --warning-color:rgb(240, 173, 78);
+    --success-color:rgb(92, 184, 92);
+    --success-color-75:rgb(92, 184, 92, .75);
     --danger-color:rgb(217, 83, 79);
+    --danger-color-75:rgb(217, 83, 79, .75);
 }
 
 h2 {
@@ -299,6 +305,118 @@ table.patch-meta tr th, table.patch-meta tr td {
 
 .checks .state.fail {
     color: #f7977a;
+}
+
+.table-bl-border-radius {
+    border-bottom-left-radius: 4px
+}
+
+.table-br-border-radius{
+    border-bottom-right-radius: 4px
+}
+
+.panel {
+    width: fit-content;
+    margin-top: 16px;
+}
+
+.panel-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-weight: bold;
+    padding: 8px;
+}
+
+#table-collapse-up-btn, #table-collapse-down-btn {
+    font-size: 16px;
+    color: var(--dark-color);
+    cursor: pointer;
+    margin-right: 4px;
+}
+
+#table-collapse-up-btn:hover, #table-collapse-down-btn:hover {
+    color: var(--dark-color-75);
+}
+
+.panel-actions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+#related-patch-actions-input {
+    font-weight: normal;
+    border: var(--dark-color-25) solid 1px;
+    border-radius: 4px;
+    background-color: white;
+    margin-left: 8px;
+    padding: 2px 8px;
+}
+
+#related-patch-actions-input:focus {
+    outline: none;
+}
+
+#add-patch-relation-btn {
+    color: var(--success-color);
+    font-size: 16px;
+    margin: 0px 8px;
+    cursor: pointer;
+}
+
+#add-patch-relation-btn:hover {
+    color: var(--success-color-75);
+}
+
+#remove-patch-relation-btn {
+    color: var(--danger-color);
+    font-size: 16px;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+#remove-patch-relation-btn:hover {
+    color: var(--danger-color-75);
+}
+
+#related-patches-table {
+    border: inherit;
+    border-collapse: separate;
+    border-radius: 0px 0px 4px 4px;
+}
+
+.btn-copy {
+    background-color: var(--light-color);
+    border-radius: 4px;
+    transition: all 0.3s ease-in-out;
+}
+
+.btn-copy:hover {
+    outline: none;
+    transform: translateY(-2px);
+    filter: opacity(75%) drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.4));
+}
+
+button[title="Copy to Clipboard"].btn-copy:active {
+    outline: none;
+    transform: translateY(-1px);
+    filter: opacity(100%);
+}
+
+#current-related-patch {
+    font-weight: bold;
+}
+
+.related-patches-header, .related-patches-footer {
+    border: transparent solid 1px;
+    border-radius: 4px 4px 0px 0px;
+    font-weight: 600;
+}
+
+.table thead > .related-patches-header > th {
+    vertical-align: middle;
+    border-bottom: var(--dark-color-50) solid 1px;
 }
 
 .submission-message .meta {

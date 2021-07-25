@@ -137,6 +137,98 @@
 {% endif %}
 </table>
 
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <div class="panel-title">
+      <span id="table-collapse-up-btn" class="glyphicon glyphicon glyphicon-collapse-up" aria-hidden="true"></span>
+      <span id="table-collapse-down-btn" class="glyphicon glyphicon-collapse-down hidden" aria-hidden="true"></span>
+      Patch Relations
+    </div>
+    <form method="POST" class="panel-actions">
+      {% csrf_token %}
+      <a id="patch-relation-issue" href="">Wrong related patches?</a>
+      <div class="panel-actions-bar hidden">
+        <input type="text" name="related_input" id="related-patch-actions-input" placeholder="Add/remove with comma-separated IDs and Message IDs">
+        <button type="submit" name="action" id="add-patch-relation-btn" class="glyphicon glyphicon-plus-sign" value="add-related"></button>
+        <button type="submit" name="action" id="remove-patch-relation-btn" class="glyphicon glyphicon-minus-sign" value="remove-related"></button>
+      </div>
+    </form>
+  </div>
+  <table id="related-patches-table" class="table">
+    <thead>
+      <tr class="related-patches-header">
+        <th class="table-tl-border-radius">ID</th>
+        <th>Patch</th>
+        <th title="Total ( Unaddressed / Addressed )">Comments</th>
+        <th title="Acked-by / Reviewed-by / Tested-by" class="table-tr-border-radius">A/R/T</th>
+      </tr>
+    </thead>
+    <tbody id="related-patches-body">
+      {% for related_patch in related_same_project %}
+        {% if related_patch.name != submission.name %}
+          <tr class="related-patch-row">
+        {% else %}
+          <tr id="current-related-patch" class="related-patch-row bg-warning">
+        {% endif %}
+          {% if patch_relation %}
+            <td>
+          {% else %}
+            <td class="table-bl-border-radius">
+          {% endif %}
+              <button type="button" class="btn btn-xs btn-copy"
+              data-clipboard-text="{{ related_patch.id }}" title="Copy to Clipboard">
+                {{ related_patch.id }}
+              </button>
+            </td>
+            <td>
+              <a href="{% url 'patch-detail' project_id=project.linkname msgid=related_patch.url_msgid %}">
+                {{ related_patch.name|default:"[no subject]"|truncatechars:100 }}
+              </a>
+            </td>
+            <td>
+              <span class="total-comments-count" title="Total Comments">
+                {{ related_patch.unaddressed_comments_count|add:related_patch.addressed_comments_count }}
+              </span> (
+              <span title="Unaddressed Comments">
+                <span id="comment-action-icon" class="glyphicon glyphicon-warning-sign text-warning" aria-hidden="true"></span>
+                <span class="unaddressed-comments-count">
+                  {{ related_patch.unaddressed_comments_count }}
+                </span>
+              </span>
+              <span title="Addressed Comments">
+                <span id="comment-status-icon" class="glyphicon glyphicon-ok-circle text-success" aria-hidden="true"></span>
+                <span class="addressed-comments-count">
+                  {{ related_patch.addressed_comments_count }}
+                </span>)
+              </span>
+            </td>
+          {% if patch_relation %}
+            <td>{{ related_patch|patch_tags }}</td>
+          {% else %}
+            <td class="table-br-border-radius">{{ related_patch|patch_tags }}</td>
+          {% endif %}
+          </tr>
+      {% endfor %}
+      {% if patch_relation %}
+        <tr class="related-patches-footer bg-info">
+          <td></td>
+          <td class="table-bl-border-radius">
+            {{ related_same_project|length }} Related Patches
+          </td>
+          <td>
+            {{ patch_relation.unaddressed_comments_total|add:patch_relation.addressed_comments_total }} (
+            <span id="comment-action-icon" class="glyphicon glyphicon-warning-sign text-warning" aria-hidden="true"></span>
+            {{ patch_relation.unaddressed_comments_total }}
+            <span id="comment-status-icon" class="glyphicon glyphicon-ok-circle text-success" aria-hidden="true"></span>
+            {{ patch_relation.addressed_comments_total }})
+          </td>
+          <td class="table-br-border-radius">{{ related_same_project|patch_relation_tags:project }}</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
 <div class="patchforms">
 {% if patchform %}
  <div class="patchform patchform-properties">
@@ -337,20 +429,4 @@
   </pre>
 </div>
 {% endfor %}
-<<<<<<< HEAD
-
-{% if submission.diff %}
-<div>
-  {% include "patchwork/partials/download-buttons.html" %}
-  <h2>Patch</h2>
-</div>
-<div id="patch" class="patch">
-<pre class="content">
-{{ submission|patchsyntax }}
-</pre>
-</div>
-{% endif %}
-
-=======
->>>>>>> 3185b469 (patch-detail: move patch diff section up and add collapse button)
 {% endblock %}

@@ -2,6 +2,15 @@ import { updateProperty } from "./rest.js";
 
 $( document ).ready(function() {
     const patchMeta = document.getElementById("patch-meta");
+    const actionsInput = document.getElementById("related-patch-actions-input");
+    const collapseTableBtn = document.getElementById("table-collapse-up-btn");
+    const expandTableBtn = document.getElementById("table-collapse-down-btn");
+    const relatedActionsBar = document.getElementsByClassName("panel-actions-bar")[0];
+    const maintainers = django_maintainers_data['maintainers'];
+
+    // Resize related patches input to length of placeholder text (+1 accounts for last letter)
+    actionsInput.setAttribute('size', actionsInput.getAttribute('placeholder').length + 1);
+
     function toggleDiv(link_id, headers_id, label_show, label_hide) {
         const link = document.getElementById(link_id)
         const headers = document.getElementById(headers_id)
@@ -32,6 +41,38 @@ $( document ).ready(function() {
                 $("div[class^='comment-status-bar-'][data-comment-id='"+commentId+"']").toggleClass("hidden");
             }
         })
+    });
+
+    function toggleVisibility(elements) {
+        for (let elem of elements) {
+            elem.classList.toggle("hidden");
+        }
+    }
+
+    $("#patch-relation-issue").click((event) => {
+        if (relatedActionsBar.classList.contains("hidden") && is_editable) {
+            $(relatedActionsBar).toggleClass("hidden");
+            $(event.target).toggleClass("hidden");
+            event.preventDefault();
+        } else if (!is_editable) {
+            // TODO: Fix commas (',') cutting off rest of patch subject
+            const patchSubject = $("#current-related-patch > td > a").text().trim();
+            let maintainersList = "";
+            for (let i = 0; i < maintainers.length; i++) {
+                if (i != maintainers.length-1) {
+                    maintainersList += maintainers[i] + ";"
+                } else {
+                    maintainersList += maintainers[i];
+                }
+            }
+            event.target.href = `mailto:patchwork@lists.ozlabs.org?subject=[Patch Relations Fix]:%20${patchSubject}&cc=${maintainersList}`
+        }
+    });
+
+    // Click listener to collapse/expand related patches table
+    $(collapseTableBtn).add(expandTableBtn).click(function() {
+        const collapseRows = document.querySelectorAll("#related-patches-body > tr:not(.related-patches-footer, #current-related-patch)");
+        toggleVisibility([...collapseRows, collapseTableBtn, expandTableBtn]);
     });
 
     // Click listener to show/hide headers
