@@ -40,7 +40,11 @@ def patch_detail(request, project_id, msgid):
 
     # redirect to cover letters where necessary
     try:
-        patch = Patch.objects.get(project_id=project.id, msgid=db_msgid)
+        # Current patch needs tag counts when no relation exists
+        patch_qs = Patch.objects.filter(
+            project_id=project.id, msgid=db_msgid
+        ).with_tag_counts(project)
+        patch = patch_qs.get()
     except Patch.DoesNotExist:
         covers = Cover.objects.filter(
             project_id=project.id,
@@ -113,15 +117,19 @@ def patch_detail(request, project_id, msgid):
                              'addressed')
 
     if patch.related:
-        related_same_project = patch.related.patches.only(
-            'name', 'msgid', 'project', 'related')
+        related_same_project = patch.related.patches.order_by('-id').only(
+            'name', 'msgid', 'project', 'related').with_tag_counts(project)
+        related_ids = {'ids': [rp.id for rp in related_same_project]}
         # avoid a second trip out to the db for info we already have
         related_different_project = [
             related_patch for related_patch in related_same_project
             if related_patch.project_id != patch.project_id
         ]
     else:
-        related_same_project = []
+        # If no patch relation exists, then current patch is only related.
+        # Add tag counts to the patch to display in patch relation table.
+        related_same_project = [patch]
+        related_ids = {'ids': [patch.id]}
         related_different_project = []
 
     context['comments'] = comments
@@ -133,7 +141,9 @@ def patch_detail(request, project_id, msgid):
     context['patchform'] = form
     context['createbundleform'] = createbundleform
     context['project'] = patch.project
+    context['patch_relation'] = patch.related
     context['related_same_project'] = related_same_project
+    context['related_ids'] = related_ids
     context['related_different_project'] = related_different_project
 
     return render(request, 'patchwork/submission.html', context)

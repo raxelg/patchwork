@@ -9,6 +9,9 @@
 
 {% block headers %}
   <script type="module" src="{% static "js/submission.js" %}"></script>
+  <script type="text/javascript">
+    let is_editable = {{ editable|yesno:"true,false" }};
+  </script>
 {% endblock %}
 
 {% block title %}{{submission.name}}{% endblock %}

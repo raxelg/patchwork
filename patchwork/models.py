@@ -462,6 +462,14 @@ class Patch(SubmissionMixin):
 
     objects = PatchManager()
 
+    @property
+    def unaddressed_comments_count(self):
+        return self.comments.filter(addressed=False).count()
+
+    @property
+    def addressed_comments_count(self):
+        return self.comments.filter(addressed=True).count()
+
     @staticmethod
     def extract_tags(content, tags):
         counts = Counter()
@@ -493,6 +501,18 @@ class Patch(SubmissionMixin):
 
         for tag in tags:
             self._set_tag(tag, counter[tag])
+
+    def patch_tags_count(self):
+        counts = []
+        titles = []
+        for tag in [t for t in self.project.tags if t.show_column]:
+            count = getattr(self, tag.attr_name)
+            titles.append('%d %s' % (count, tag.name))
+            if count == 0:
+                counts.append("-")
+            else:
+                counts.append(count)
+        return counts, titles
 
     def save(self, *args, **kwargs):
         if not hasattr(self, 'state') or not self.state:
@@ -949,6 +969,22 @@ class BundlePatch(models.Model):
 
 
 class PatchRelation(models.Model):
+
+    @property
+    def unaddressed_comments_total(self):
+        total = 0
+        patches = self.patches.all()
+        for patch in patches:
+            total += patch.unaddressed_comments_count
+        return total
+
+    @property
+    def addressed_comments_total(self):
+        total = 0
+        patches = self.patches.all()
+        for patch in patches:
+            total += patch.addressed_comments_count
+        return total
 
     def __str__(self):
         patches = self.patches.all()

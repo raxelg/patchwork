@@ -16,18 +16,25 @@ register = template.Library()
 
 @register.filter(name='patch_tags')
 def patch_tags(patch):
-    counts = []
-    titles = []
-    for tag in [t for t in patch.project.tags if t.show_column]:
-        count = getattr(patch, tag.attr_name)
-        titles.append('%d %s' % (count, tag.name))
-        if count == 0:
-            counts.append("-")
-        else:
-            counts.append(str(count))
+    counts, titles = patch.patch_tags_count()
     return mark_safe('<span title="%s">%s</span>' % (
         ' / '.join(titles),
-        ' '.join(counts)))
+        ' '.join([str(x) for x in counts])))
+
+
+@register.filter(name='patch_relation_tags')
+def patch_relation_tags(related_patches, project):
+    tags = [tag.abbrev for tag in project.tags]
+    tags_summary = ["-" for _ in range(len(tags))]
+    for patch in related_patches:
+        counts = patch.patch_tags_count()[0]
+        for i, count in enumerate(counts):
+            if count != '-':
+                # Replaces a non-zero tag count with tag abbreviation
+                # to indicate that existence of such tag in the set
+                # of related patches
+                tags_summary[i] = tags[i]
+    return mark_safe('<span>%s</span>' % (' '.join(tags_summary)))
 
 
 @register.filter(name='patch_checks')
@@ -71,3 +78,10 @@ def patch_commit_display(patch):
 
     return mark_safe('<a href="%s">%s</a>' % (escape(fmt.format(commit)),
                                               escape(commit)))
+
+
+# TODO: can be modularized into a utils.py templatetags file
+# to get is_editable from any object
+@register.filter(name='patch_is_editable')
+def patch_is_editable(patch, user):
+    return patch.is_editable(user)
