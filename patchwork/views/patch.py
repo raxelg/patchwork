@@ -14,7 +14,6 @@ from django.urls import reverse
 
 from patchwork.forms import CreateBundleForm
 from patchwork.forms import PatchForm
-from patchwork.models import Bundle
 from patchwork.models import Cover
 from patchwork.models import Patch
 from patchwork.models import Project
@@ -123,7 +122,7 @@ def patch_detail(request, project_id, msgid):
         elif not editable:
             return HttpResponseForbidden()
 
-        elif action is None:
+        elif action == 'update':
             form = PatchForm(data=request.POST, instance=patch)
             if form.is_valid():
                 form.save()

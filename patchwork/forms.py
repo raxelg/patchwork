@@ -6,6 +6,7 @@
 from django.contrib.auth.models import User
 from django import forms
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 from django.db.utils import ProgrammingError
 
 from patchwork.models import Bundle
@@ -51,7 +52,7 @@ class EmailForm(forms.Form):
 
 class BundleForm(forms.ModelForm):
     name = forms.RegexField(
-        regex=r'^[^/]+$', min_length=1, max_length=50, label=u'Name',
+        regex=r'^[^/]+$', min_length=1, max_length=50, required=False,
         error_messages={'invalid': 'Bundle names can\'t contain slashes'})
 
     class Meta:
@@ -70,11 +71,16 @@ class CreateBundleForm(BundleForm):
 
     def clean_name(self):
         name = self.cleaned_data['name']
+        if not name:
+            raise ValidationError('No bundle name was specified',
+                                  code="invalid")
+
         count = Bundle.objects.filter(owner=self.instance.owner,
                                       name=name).count()
         if count > 0:
-            raise forms.ValidationError('A bundle called %s already exists'
-                                        % name)
+            raise ValidationError('A bundle called %(name)s already exists',
+                                  code="invalid",
+                                  params={'name': name})
         return name
 
 

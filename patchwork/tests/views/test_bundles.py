@@ -354,7 +354,7 @@ class BundleCreateFromListTest(BundleTestBase):
     def test_create_empty_bundle(self):
         newbundlename = 'testbundle-new'
         params = {'form': 'patch-list-form',
-                  'bundle_name': newbundlename,
+                  'name': newbundlename,
                   'action': 'Create',
                   'project': self.project.id}
 
@@ -370,7 +370,7 @@ class BundleCreateFromListTest(BundleTestBase):
         patch = self.patches[0]
 
         params = {'form': 'patch-list-form',
-                  'bundle_name': newbundlename,
+                  'name': newbundlename,
                   'action': 'Create',
                   'project': self.project.id,
                   'patch_id:%d' % patch.id: 'checked'}
@@ -394,7 +394,7 @@ class BundleCreateFromListTest(BundleTestBase):
         n_bundles = Bundle.objects.count()
 
         params = {'form': 'patch-list-form',
-                  'bundle_name': '',
+                  'name': '',
                   'action': 'Create',
                   'project': self.project.id,
                   'patch_id:%d' % patch.id: 'checked'}
@@ -415,7 +415,7 @@ class BundleCreateFromListTest(BundleTestBase):
         patch = self.patches[0]
 
         params = {'form': 'patch-list-form',
-                  'bundle_name': newbundlename,
+                  'name': newbundlename,
                   'action': 'Create',
                   'project': self.project.id,
                   'patch_id:%d' % patch.id: 'checked'}
@@ -440,7 +440,9 @@ class BundleCreateFromListTest(BundleTestBase):
             params)
 
         self.assertNotContains(response, 'Bundle %s created' % newbundlename)
-        self.assertContains(response, 'You already have a bundle called')
+        self.assertContains(
+            response,
+            'A bundle called %s already exists' % newbundlename)
         self.assertEqual(Bundle.objects.count(), n_bundles)
         self.assertEqual(bundle.patches.count(), 1)
 
@@ -452,7 +454,7 @@ class BundleCreateFromPatchTest(BundleTestBase):
         patch = self.patches[0]
 
         params = {'name': newbundlename,
-                  'action': 'createbundle'}
+                  'action': 'Create'}
 
         response = self.client.post(
             reverse('patch-detail',
@@ -471,7 +473,7 @@ class BundleCreateFromPatchTest(BundleTestBase):
         patch = self.patches[0]
 
         params = {'name': newbundlename,
-                  'action': 'createbundle'}
+                  'action': 'Create'}
 
         response = self.client.post(
             reverse('patch-detail',
@@ -584,7 +586,7 @@ class BundleAddFromPatchTest(BundleTestBase):
 
     def test_add_to_empty_bundle(self):
         patch = self.patches[0]
-        params = {'action': 'addtobundle',
+        params = {'action': 'Add',
                   'bundle_id': self.bundle.id}
 
         response = self.client.post(
@@ -594,7 +596,7 @@ class BundleAddFromPatchTest(BundleTestBase):
 
         self.assertContains(
             response,
-            'added to bundle &quot;%s&quot;' % self.bundle.name,
+            'added to bundle %s' % self.bundle.name,
             count=1)
 
         self.assertEqual(self.bundle.patches.count(), 1)
@@ -603,7 +605,7 @@ class BundleAddFromPatchTest(BundleTestBase):
     def test_add_to_non_empty_bundle(self):
         self.bundle.append_patch(self.patches[0])
         patch = self.patches[1]
-        params = {'action': 'addtobundle',
+        params = {'action': 'Add',
                   'bundle_id': self.bundle.id}
 
         response = self.client.post(
@@ -613,7 +615,7 @@ class BundleAddFromPatchTest(BundleTestBase):
 
         self.assertContains(
             response,
-            'added to bundle &quot;%s&quot;' % self.bundle.name,
+            'added to bundle %s' % self.bundle.name,
             count=1)
 
         self.assertEqual(self.bundle.patches.count(), 2)
@@ -651,7 +653,7 @@ class BundleInitialOrderTest(BundleTestBase):
 
         # need to define our querystring explicity to enforce ordering
         params = {'form': 'patch-list-form',
-                  'bundle_name': newbundlename,
+                  'name': newbundlename,
                   'action': 'Create',
                   'project': self.project.id,
                   }
