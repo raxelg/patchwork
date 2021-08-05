@@ -6,7 +6,6 @@ $( document ).ready(function() {
     const collapseTableBtn = document.getElementById("table-collapse-up-btn");
     const expandTableBtn = document.getElementById("table-collapse-down-btn");
     const relatedActionsBar = document.getElementsByClassName("panel-actions-bar")[0];
-    const maintainers = django_maintainers_data['maintainers'];
 
     // Resize related patches input to length of placeholder text (+1 accounts for last letter)
     actionsInput.setAttribute('size', actionsInput.getAttribute('placeholder').length + 1);
@@ -54,18 +53,6 @@ $( document ).ready(function() {
             $(relatedActionsBar).toggleClass("hidden");
             $(event.target).toggleClass("hidden");
             event.preventDefault();
-        } else if (!is_editable) {
-            // TODO: Fix commas (',') cutting off rest of patch subject
-            const patchSubject = $("#current-related-patch > td > a").text().trim();
-            let maintainersList = "";
-            for (let i = 0; i < maintainers.length; i++) {
-                if (i != maintainers.length-1) {
-                    maintainersList += maintainers[i] + ";"
-                } else {
-                    maintainersList += maintainers[i];
-                }
-            }
-            event.target.href = `mailto:patchwork@lists.ozlabs.org?subject=[Patch Relations Fix]:%20${patchSubject}&cc=${maintainersList}`
         }
     });
 

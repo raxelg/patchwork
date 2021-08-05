@@ -19,8 +19,11 @@ from patchwork.models import Cover
 from patchwork.models import Patch
 from patchwork.models import Project
 from patchwork.views import generic_list
+from patchwork.views import set_bundle
+from patchwork.views import get_patch_relations_data
 from patchwork.views.utils import patch_to_mbox
 from patchwork.views.utils import series_patch_to_mbox
+from patchwork.api.patch import update_patch_relations
 
 
 def patch_list(request, project_id):
@@ -64,6 +67,7 @@ def patch_detail(request, project_id, msgid):
 
     form = None
     createbundleform = None
+    errors = []
 
     if editable:
         form = PatchForm(instance=patch)
@@ -75,28 +79,45 @@ def patch_detail(request, project_id, msgid):
         if action:
             action = action.lower()
 
-        if action == 'createbundle':
-            bundle = Bundle(owner=request.user, project=project)
-            createbundleform = CreateBundleForm(instance=bundle,
-                                                data=request.POST)
-            if createbundleform.is_valid():
-                createbundleform.save()
-                bundle.append_patch(patch)
-                bundle.save()
-                createbundleform = CreateBundleForm()
-                messages.success(request, 'Bundle %s created' % bundle.name)
-        elif action == 'addtobundle':
-            bundle = get_object_or_404(
-                Bundle, id=request.POST.get('bundle_id'))
-            if bundle.append_patch(patch):
-                messages.success(request,
-                                 'Patch "%s" added to bundle "%s"' % (
-                                     patch.name, bundle.name))
+        if action in ['create', 'add']:
+            errors = set_bundle(request, project, action,
+                                request.POST, [patch])
+        elif action in ('add-related', 'remove-related'):
+            changed_relations = 0  # used for update message count
+            data, invalid_ids = get_patch_relations_data(
+                patch, action, request.POST
+            )
+
+            if data['related']['patches']:  # check if any ids matched
+                if action == 'add-related':
+                    update_errors = update_patch_relations(
+                        request.user.profile, patch, data
+                    )
+                    errors.extend(update_errors)
+                    if not update_errors:
+                        changed_relations += 1
+                elif action == 'remove-related':
+                    for rp in data['related']['patches']:
+                        # for removal, to-be removed patch(es)'
+                        # relations are emptied
+                        update_errors = update_patch_relations(
+                            request.user.profile, rp,
+                            {'related': {'patches': []}}
+                        )
+                        errors.extend(update_errors)
+                        if not update_errors:
+                            changed_relations += 1
+
+            errors.extend(
+                ['%s is not a valid patch/msg id' % pid for pid in invalid_ids]
+            )
+            if changed_relations >= 1:
+                messages.success(
+                    request,
+                    '%d patch relation(s) updated' % changed_relations
+                )
             else:
-                messages.error(request,
-                               'Failed to add patch "%s" to bundle "%s": '
-                               'patch is already in bundle' % (
-                                   patch.name, bundle.name))
+                messages.warning(request, 'No patch relations updated')
 
         # all other actions require edit privs
         elif not editable:
@@ -145,6 +166,7 @@ def patch_detail(request, project_id, msgid):
     context['related_same_project'] = related_same_project
     context['related_ids'] = related_ids
     context['related_different_project'] = related_different_project
+    context['errors'] = errors
 
     return render(request, 'patchwork/submission.html', context)
 

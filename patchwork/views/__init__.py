@@ -6,6 +6,7 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
+from django.core.exceptions import ObjectDoesNotExist
 
 from patchwork.filters import Filters
 from patchwork.forms import MultiplePatchForm
@@ -323,3 +324,35 @@ def process_multiplepatch_form(request, form, action, patches, context):
         messages.warning(request, 'No patches updated')
 
     return errors
+
+
+def get_patch_relations_data(patch, action, data):
+    related_input = data.get('related_input', '').strip()
+    related_ids = [id.strip('<> ') for id in related_input.split(",")]
+    # patches that match the parsed user input ids and ids that did not match
+    related_patches, invalid_ids = get_patches_id_msgid(related_ids)
+
+    if action == 'remove-related':
+        related_patches = [
+            p for p in patch.related.patches.all()
+            if p in related_patches
+        ]
+    return ({'related': {'patches': related_patches}}, invalid_ids)
+
+
+def get_patches_id_msgid(ids):
+    patches = []
+    invalid_ids = []
+    for str_id in ids:
+        try:
+            id = int(str_id)
+            try:
+                patches.append(Patch.objects.get(id=id))
+            except ObjectDoesNotExist:
+                invalid_ids.append(id)
+        except ValueError:
+            try:
+                patches.append(Patch.objects.get(msgid='<' + str_id + '>'))
+            except ObjectDoesNotExist:
+                invalid_ids.append(str_id)
+    return (patches, invalid_ids)
