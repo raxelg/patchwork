@@ -70,6 +70,87 @@ class PatchConflict(APIException):
     )
 
 
+def check_user_maintains_all(user, patches):
+    maintains = user.maintainer_projects.all()
+    if any(s.project not in maintains for s in patches):
+        detail = (
+            'At least one patch is part of a project you are not '
+            'maintaining.'
+        )
+        raise PermissionDenied(detail=detail)
+    return True
+
+
+def update_patch_relations(user, patch, data):
+    # Validation rules
+    # ----------------
+    #
+    # Permissions: to change a relation:
+    #   for all patches in the relation, current and proposed,
+    #     the user must be maintainer of the patch's project
+    #  Note that this has a ratchet effect: if you add a cross-project
+    #  relation, only you or another maintainer across both projects can
+    #  modify that relationship in _any way_.
+    #
+    # Break before Make: a patch must be explicitly removed from a
+    #   relation before being added to another
+    #
+    # No Read-Modify-Write for deletion:
+    #   to delete a patch from a relation, clear _its_ related patch,
+    #   don't modify one of the patches that are to remain.
+    #
+    # (As a consequence of those two, operations are additive:
+    #   if 1 is in a relation with [1,2,3], then
+    #   patching 1 with related=[2,4] gives related=[1,2,3,4])
+
+    # Permissions:
+    # Must be maintainer of:
+    #  - current patch
+    check_user_maintains_all(user, [patch])
+    #  - all patches currently in relation
+    #  - all patches proposed to be in relation
+    errors = []
+    related_patches = data.pop('related')
+    patches = set(related_patches['patches']) if related_patches else set()
+    if patch.related is not None:
+        patches = patches.union(patch.related.patches.all())
+    check_user_maintains_all(user, patches)
+
+    # handle deletion
+    if not related_patches['patches']:
+        # do not allow relations with a single patch
+        if patch.related and patch.related.patches.count() == 2:
+            patch.related.delete()
+        patch.related = None
+        patch.save()
+        return errors
+
+    # break before make
+    relations = {patch.related for patch in patches if patch.related}
+    if len(relations) > 1:
+        return [PatchConflict()]
+    if relations:
+        relation = relations.pop()
+    else:
+        relation = None
+    if relation and patch.related is not None:
+        if patch.related != relation:
+            return [PatchConflict()]
+
+    # apply
+    if relation is None:
+        relation = PatchRelation()
+        relation.save()
+
+    for rp in patches:
+        rp.related = relation
+        rp.save()
+    patch.related = relation
+    patch.save()
+
+    return errors
+
+
 class PatchListSerializer(BaseHyperlinkedModelSerializer):
 
     web_url = SerializerMethodField()
@@ -184,86 +265,12 @@ class PatchDetailSerializer(PatchListSerializer):
             return super(PatchDetailSerializer, self).update(
                 instance, validated_data)
 
-        related = validated_data.pop('related')
-
-        # Validation rules
-        # ----------------
-        #
-        # Permissions: to change a relation:
-        #   for all patches in the relation, current and proposed,
-        #     the user must be maintainer of the patch's project
-        #  Note that this has a ratchet effect: if you add a cross-project
-        #  relation, only you or another maintainer across both projects can
-        #  modify that relationship in _any way_.
-        #
-        # Break before Make: a patch must be explicitly removed from a
-        #   relation before being added to another
-        #
-        # No Read-Modify-Write for deletion:
-        #   to delete a patch from a relation, clear _its_ related patch,
-        #   don't modify one of the patches that are to remain.
-        #
-        # (As a consequence of those two, operations are additive:
-        #   if 1 is in a relation with [1,2,3], then
-        #   patching 1 with related=[2,4] gives related=[1,2,3,4])
-
-        # Permissions:
-        # Because we're in a serializer, not a view, this is a bit clunky
         user = self.context['request'].user.profile
-        # Must be maintainer of:
-        #  - current patch
-        self.check_user_maintains_all(user, [instance])
-        #  - all patches currently in relation
-        #  - all patches proposed to be in relation
-        patches = set(related['patches']) if related else {}
-        if instance.related is not None:
-            patches = patches.union(instance.related.patches.all())
-        self.check_user_maintains_all(user, patches)
-
-        # handle deletion
-        if not related['patches']:
-            # do not allow relations with a single patch
-            if instance.related and instance.related.patches.count() == 2:
-                instance.related.delete()
-            instance.related = None
-            return super(PatchDetailSerializer, self).update(
-                instance, validated_data)
-
-        # break before make
-        relations = {patch.related for patch in patches if patch.related}
-        if len(relations) > 1:
-            raise PatchConflict()
-        if relations:
-            relation = relations.pop()
-        else:
-            relation = None
-        if relation and instance.related is not None:
-            if instance.related != relation:
-                raise PatchConflict()
-
-        # apply
-        if relation is None:
-            relation = PatchRelation()
-            relation.save()
-        for patch in patches:
-            patch.related = relation
-            patch.save()
-        instance.related = relation
-        instance.save()
-
+        errors = update_patch_relations(user, instance, validated_data)
+        if errors:
+            raise errors.pop()
         return super(PatchDetailSerializer, self).update(
             instance, validated_data)
-
-    @staticmethod
-    def check_user_maintains_all(user, patches):
-        maintains = user.maintainer_projects.all()
-        if any(s.project not in maintains for s in patches):
-            detail = (
-                'At least one patch is part of a project you are not '
-                'maintaining.'
-            )
-            raise PermissionDenied(detail=detail)
-        return True
 
     class Meta:
         model = Patch
