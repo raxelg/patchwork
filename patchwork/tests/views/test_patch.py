@@ -71,7 +71,7 @@ class PatchListOrderingTest(TestCase):
                          date=date)
 
     def _extract_patch_ids(self, response):
-        id_re = re.compile(r'<tr id="patch_row:(\d+)"')
+        id_re = re.compile(r'<tr id="patch-row:(\d+)"')
         ids = [int(m.group(1))
                for m in id_re.finditer(response.content.decode())]
 
@@ -304,7 +304,7 @@ class PatchViewTest(TestCase):
 
 class PatchUpdateTest(TestCase):
 
-    properties_form_id = 'patchform-properties'
+    properties_form_id = 'patch-form-properties'
 
     def setUp(self):
         self.project = create_project()
@@ -318,7 +318,7 @@ class PatchUpdateTest(TestCase):
         self.base_data = {
             'action': 'Update',
             'project': str(self.project.id),
-            'form': 'patchlistform',
+            'form': 'patch-list-form',
             'archived': '*',
             'delegate': '*',
             'state': '*'

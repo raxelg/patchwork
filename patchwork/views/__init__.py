@@ -222,12 +222,12 @@ def generic_list(request, project, view, view_args=None, filter_settings=None,
         # we only pass the post data to the MultiplePatchForm if that was
         # the actual form submitted
         data_tmp = None
-        if data and data.get('form', '') == 'patchlistform':
+        if data and data.get('form', '') == 'patch-list-form':
             data_tmp = data
 
         properties_form = MultiplePatchForm(project, data=data_tmp)
 
-    if request.method == 'POST' and data.get('form') == 'patchlistform':
+    if request.method == 'POST' and data.get('form') == 'patch-list-form':
         action = data.get('action', '').lower()
 
         # special case: the user may have hit enter in the 'create bundle'
