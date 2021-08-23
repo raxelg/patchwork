@@ -4,6 +4,10 @@
 {% load project %}
 {% load static %}
 
+{% block headers %}
+  <script src="{% static "js/patch-list.js" %}"></script>
+{% endblock %}
+
 {% include "patchwork/partials/filters.html" %}
 
 {% include "patchwork/partials/pagination.html" %}
@@ -34,21 +38,6 @@
  </a>
 </div>
 {% endif %}
-
-<script type="text/javascript">
-$(document).ready(function() {
-    $('#patchlist').stickyTableHeaders();
-
-    $('#check-all').change(function(e) {
-        if(this.checked) {
-            $('#patchlist > tbody').checkboxes('check');
-        } else {
-            $('#patchlist > tbody').checkboxes('uncheck');
-        }
-        e.preventDefault();
-    });
-});
-</script>
 
 <form method="post">
 {% csrf_token %}
